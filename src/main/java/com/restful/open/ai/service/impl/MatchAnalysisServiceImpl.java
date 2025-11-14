@@ -26,7 +26,6 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
 
     @Override
     public ResumeMatchAnalysis analyze(String normalizedJobDescription, String normalizedResumeText) {
-        // 1) Montar prompt
         String templateText = """
                 Você é um avaliador de compatibilidade entre vagas de tecnologia e currículos.
                 Analise a vaga e o currículo abaixo e responda em JSON no seguinte formato:
@@ -66,13 +65,11 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
                 )
         );
 
-        // 2) Chamar LLM com Structured Output (mapeando para ResumeMatchAnalysis)
         ResumeMatchAnalysis llmAnalysis = chatClient
-                .prompt()
+                .prompt(prompt)
                 .call()
                 .entity(ResumeMatchAnalysis.class);
 
-        // 3) Opcional: score via embeddings
         int finalScore = computeHybridScore(
                 normalizedJobDescription,
                 normalizedResumeText,
@@ -89,14 +86,12 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
 
     private int computeHybridScore(String jobDescription, String resume, int llmScore) {
         try {
-            // 1) Gera embeddings com a API recomendada
             EmbeddingResponse jobEmbeddingResponse =
                     embeddingModel.embedForResponse(List.of(jobDescription));
 
             EmbeddingResponse resumeEmbeddingResponse =
                     embeddingModel.embedForResponse(List.of(resume));
 
-            // 2) Extrai o vetor (Embedding -> float[])
             float[] jobVector = jobEmbeddingResponse.getResult().getOutput();
             float[] resumeVector = resumeEmbeddingResponse.getResult().getOutput();
 
@@ -106,7 +101,6 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
             double finalScore = 0.6 * llmScore + 0.4 * embeddingScore;
             return (int) Math.round(finalScore);
         } catch (Exception exception) {
-            // fallback: usar só o score do LLM
             return llmScore;
         }
     }
