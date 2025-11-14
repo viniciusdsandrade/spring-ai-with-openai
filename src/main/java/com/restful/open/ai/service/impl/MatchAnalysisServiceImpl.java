@@ -28,31 +28,17 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
     public ResumeMatchAnalysis analyze(String normalizedJobDescription, String normalizedResumeText) {
         String templateText = """
                 Você é um avaliador de compatibilidade entre vagas de tecnologia e currículos.
-                Analise a vaga e o currículo abaixo e responda em JSON no seguinte formato:
-                {
-                  "score": 0-1000,
-                  "scoreExplanation": "string",
-                  "keywords": [
-                    {
-                      "keyword": "string",
-                      "present": true/false,
-                      "evidenceSnippet": "string",
-                      "importance": 1-5
-                    }
-                  ],
-                  "suggestions": [
-                    {
-                      "section": "string",
-                      "currentWeakness": "string",
-                      "suggestedImprovement": "string",
-                      "priority": 1-5
-                    }
-                  ]
-                }
-                
+                Analise a vaga e o currículo abaixo e responda SOMENTE com um JSON válido
+                com a seguinte estrutura (sem comentários):
+
+                - score: número inteiro entre 0 e 1000
+                - scoreExplanation: string explicando os principais motivos do score
+                - keywords: lista de objetos com campos keyword, present, evidenceSnippet, importance (1-5)
+                - suggestions: lista de objetos com campos section, currentWeakness, suggestedImprovement, priority (1-5)
+
                 VAGA:
                 {jobDescription}
-                
+
                 CURRICULO:
                 {resume}
                 """;
@@ -65,6 +51,7 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
                 )
         );
 
+        // usa o Prompt montado
         ResumeMatchAnalysis llmAnalysis = chatClient
                 .prompt(prompt)
                 .call()

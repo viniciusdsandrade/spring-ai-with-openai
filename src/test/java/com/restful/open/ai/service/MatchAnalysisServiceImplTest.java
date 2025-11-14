@@ -8,10 +8,12 @@ import com.restful.open.ai.service.impl.MatchAnalysisServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -165,5 +167,43 @@ public class MatchAnalysisServiceImplTest {
         verify(requestSpec).call();
         verify(callResponseSpec).entity(ResumeMatchAnalysis.class);
         verify(embeddingModel).embedForResponse(any());
+    }
+
+    @Test
+    @DisplayName("analyze: prompt inclui vaga e currículo normalizados")
+    void analyze_buildsPromptWithJobAndResume() {
+        String job = "Vaga para backend Java com Spring e Kubernetes";
+        String cv = "Desenvolvedor Java com experiência em Spring";
+
+        when(chatClient.prompt(any(Prompt.class)))
+                .thenReturn(requestSpec);
+        when(requestSpec.call())
+                .thenReturn(callResponseSpec);
+        when(callResponseSpec.entity(ResumeMatchAnalysis.class))
+                .thenReturn(llmAnalysis(600));
+
+        when(embeddingModel.embedForResponse(any()))
+                .thenReturn(jobEmbeddingResponse, resumeEmbeddingResponse);
+        when(jobEmbeddingResponse.getResult()).thenReturn(jobEmbedding);
+        when(resumeEmbeddingResponse.getResult()).thenReturn(resumeEmbedding);
+        when(jobEmbedding.getOutput()).thenReturn(new float[]{1.0f, 0.0f});
+        when(resumeEmbedding.getOutput()).thenReturn(new float[]{1.0f, 0.0f});
+
+        matchAnalysisService.analyze(job, cv);
+
+        ArgumentCaptor<Prompt> captor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatClient).prompt(captor.capture());
+
+        Prompt captured = captor.getValue();
+        List<Message> messages = captured.getInstructions();
+        assertThat(messages).isNotEmpty();
+
+        String content = messages.getFirst().getText();
+        assertThat(content).contains(job);
+        assertThat(content).contains(cv);
+        // garante que placeholders foram resolvidos
+        assertThat(content)
+                .doesNotContain("{jobDescription}")
+                .doesNotContain("{resume}");
     }
 }
