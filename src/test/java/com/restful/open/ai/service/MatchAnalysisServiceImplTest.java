@@ -239,4 +239,34 @@ public class MatchAnalysisServiceImplTest {
 
         assertThat(result.score()).isEqualTo(680);
     }
+    @Test
+    @DisplayName("computeHybridScore: vetor com norma zero resulta em similaridade 0")
+    void analyze_zeroNormEmbedding_yieldsZeroSimilarity() {
+        String job = "Vaga W";
+        String cv = "Curriculo T";
+
+        when(chatClient.prompt(any(Prompt.class)))
+                .thenReturn(requestSpec);
+        when(requestSpec.call())
+                .thenReturn(callResponseSpec);
+        when(callResponseSpec.entity(ResumeMatchAnalysis.class))
+                .thenReturn(llmAnalysis(700));
+
+        when(embeddingModel.embedForResponse(List.of(job)))
+                .thenReturn(jobEmbeddingResponse);
+        when(embeddingModel.embedForResponse(List.of(cv)))
+                .thenReturn(resumeEmbeddingResponse);
+
+        when(jobEmbeddingResponse.getResult())
+                .thenReturn(jobEmbedding);
+        when(resumeEmbeddingResponse.getResult())
+                .thenReturn(resumeEmbedding);
+
+        when(jobEmbedding.getOutput()).thenReturn(new float[]{0.0f, 0.0f});
+        when(resumeEmbedding.getOutput()).thenReturn(new float[]{1.0f, 0.0f});
+
+        ResumeMatchAnalysis result = matchAnalysisService.analyze(job, cv);
+
+        assertThat(result.score()).isEqualTo(420);
+    }
 }
