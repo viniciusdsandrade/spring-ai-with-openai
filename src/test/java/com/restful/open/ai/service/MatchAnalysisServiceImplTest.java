@@ -269,4 +269,35 @@ public class MatchAnalysisServiceImplTest {
 
         assertThat(result.score()).isEqualTo(420);
     }
+
+    @Test
+    @DisplayName("computeHybridScore: mismatch de dimensão dos vetores faz fallback para score do LLM")
+    void analyze_dimensionMismatch_fallsBackToLlmScore() {
+        String job = "Vaga M";
+        String cv = "Curriculo N";
+
+        when(chatClient.prompt(any(Prompt.class)))
+                .thenReturn(requestSpec);
+        when(requestSpec.call())
+                .thenReturn(callResponseSpec);
+        when(callResponseSpec.entity(ResumeMatchAnalysis.class))
+                .thenReturn(llmAnalysis(650));
+
+        when(embeddingModel.embedForResponse(List.of(job)))
+                .thenReturn(jobEmbeddingResponse);
+        when(embeddingModel.embedForResponse(List.of(cv)))
+                .thenReturn(resumeEmbeddingResponse);
+
+        when(jobEmbeddingResponse.getResult())
+                .thenReturn(jobEmbedding);
+        when(resumeEmbeddingResponse.getResult())
+                .thenReturn(resumeEmbedding);
+
+        when(jobEmbedding.getOutput()).thenReturn(new float[]{1.0f, 2.0f});
+        when(resumeEmbedding.getOutput()).thenReturn(new float[]{1.0f});
+
+        ResumeMatchAnalysis result = matchAnalysisService.analyze(job, cv);
+
+        assertThat(result.score()).isEqualTo(650);
+    }
 }
