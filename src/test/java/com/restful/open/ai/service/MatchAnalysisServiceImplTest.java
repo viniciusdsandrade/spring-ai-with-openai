@@ -206,4 +206,37 @@ public class MatchAnalysisServiceImplTest {
                 .doesNotContain("{jobDescription}")
                 .doesNotContain("{resume}");
     }
+
+    @Test
+    @DisplayName("computeHybridScore: combina scores LLM e embedding com similaridade parcial")
+    void analyze_mediumSimilarity_combinesScores() {
+        String job = "Vaga Y";
+        String cv = "Curriculo Z";
+
+        when(chatClient.prompt(any(Prompt.class)))
+                .thenReturn(requestSpec);
+        when(requestSpec.call())
+                .thenReturn(callResponseSpec);
+        when(callResponseSpec.entity(ResumeMatchAnalysis.class))
+                .thenReturn(llmAnalysis(600));
+
+        when(embeddingModel.embedForResponse(List.of(job)))
+                .thenReturn(jobEmbeddingResponse);
+        when(embeddingModel.embedForResponse(List.of(cv)))
+                .thenReturn(resumeEmbeddingResponse);
+
+        when(jobEmbeddingResponse.getResult())
+                .thenReturn(jobEmbedding);
+        when(resumeEmbeddingResponse.getResult())
+                .thenReturn(resumeEmbedding);
+
+        float[] jobVector = new float[]{1.0f, 0.0f};
+        float[] resumeVector = new float[]{4.0f, 3.0f};
+        when(jobEmbedding.getOutput()).thenReturn(jobVector);
+        when(resumeEmbedding.getOutput()).thenReturn(resumeVector);
+
+        ResumeMatchAnalysis result = matchAnalysisService.analyze(job, cv);
+
+        assertThat(result.score()).isEqualTo(680);
+    }
 }
