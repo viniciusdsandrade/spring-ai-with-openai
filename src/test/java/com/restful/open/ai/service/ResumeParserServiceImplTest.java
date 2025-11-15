@@ -30,17 +30,17 @@ public class ResumeParserServiceImplTest {
     @Mock
     private Tika tika;
 
-    private ResumeParserServiceImpl service;
+    private ResumeParserServiceImpl resumeParserService;
 
     @BeforeEach
     void setUp() {
-        service = new ResumeParserServiceImpl(tika);
+        resumeParserService = new ResumeParserServiceImpl(tika);
     }
 
     @Test
     @DisplayName("normalize: retorna string vazia quando texto é null")
     void normalize_null_returnsEmptyString() {
-        String result = service.normalize(null);
+        String result = resumeParserService.normalize(null);
 
         assertThat(result).isEmpty();
     }
@@ -50,7 +50,7 @@ public class ResumeParserServiceImplTest {
     void normalize_compressesWhitespaceAndTrims() {
         String raw = "  Currículo   com \n várias \t linhas  ";
 
-        String result = service.normalize(raw);
+        String result = resumeParserService.normalize(raw);
 
         assertThat(result).isEqualTo("Currículo com várias linhas");
     }
@@ -61,7 +61,7 @@ public class ResumeParserServiceImplTest {
         int maxLength = 15000;
         String longText = "b".repeat(maxLength + 5);
 
-        String result = service.normalize(longText);
+        String result = resumeParserService.normalize(longText);
 
         assertThat(result).hasSize(maxLength);
         assertThat(result).isEqualTo(longText.substring(0, maxLength));
@@ -77,7 +77,7 @@ public class ResumeParserServiceImplTest {
         when(multipartFile.getInputStream()).thenReturn(inputStream);
         when(tika.parseToString(any(InputStream.class))).thenReturn(rawContent);
 
-        String result = service.extractText(multipartFile);
+        String result = resumeParserService.extractText(multipartFile);
 
         assertThat(result).isEqualTo("Conteúdo de currículo com múltiplas linhas");
     }
@@ -87,11 +87,11 @@ public class ResumeParserServiceImplTest {
     void extractText_whenIoError_throwsRuntimeException() throws Exception {
         when(multipartFile.getInputStream()).thenThrow(new IOException("I/O error"));
 
-        assertThatThrownBy(() -> service.extractText(multipartFile))
+        assertThatThrownBy(() -> resumeParserService.extractText(multipartFile))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Error parsing resume file");
     }
-    
+
     @Test
     @DisplayName("extractText: quando ocorre TikaException, lança RuntimeException com mensagem apropriada")
     void extractText_whenTikaError_throwsRuntimeException() throws Exception {
@@ -101,7 +101,7 @@ public class ResumeParserServiceImplTest {
         when(tika.parseToString(any(InputStream.class)))
                 .thenThrow(new TikaException("parse error"));
 
-        assertThatThrownBy(() -> service.extractText(multipartFile))
+        assertThatThrownBy(() -> resumeParserService.extractText(multipartFile))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Error parsing resume file");
     }
