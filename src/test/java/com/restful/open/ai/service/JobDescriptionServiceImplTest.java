@@ -17,4 +17,15 @@ public class JobDescriptionServiceImplTest {
 
         assertThat(result).isEmpty();
     }
+
+
+    @Test
+    @DisplayName("normalize: comprime espaços em branco e remove espaços das bordas")
+    void normalize_compressesWhitespaceAndTrims() {
+        String raw = "  Vaga   para   backend \n Java\tcom   Spring  ";
+
+        String result = service.normalize(raw);
+
+        assertThat(result).isEqualTo("Vaga para backend Java com Spring");
+    }
 }
