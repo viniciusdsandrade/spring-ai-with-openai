@@ -66,4 +66,19 @@ public class ResumeParserServiceImplTest {
         assertThat(result).hasSize(maxLength);
         assertThat(result).isEqualTo(longText.substring(0, maxLength));
     }
+
+    @Test
+    @DisplayName("extractText: utiliza Tika para extrair texto e aplica normalização")
+    void extractText_parsesAndNormalizesText() throws Exception {
+        String rawContent = "  Conteúdo   de currículo \n com \t múltiplas  linhas ";
+        InputStream inputStream =
+                new ByteArrayInputStream(rawContent.getBytes(StandardCharsets.UTF_8));
+
+        when(multipartFile.getInputStream()).thenReturn(inputStream);
+        when(tika.parseToString(any(InputStream.class))).thenReturn(rawContent);
+
+        String result = service.extractText(multipartFile);
+
+        assertThat(result).isEqualTo("Conteúdo de currículo com múltiplas linhas");
+    }
 }
