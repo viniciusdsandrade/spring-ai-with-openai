@@ -51,7 +51,6 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
                 )
         );
 
-        // usa o Prompt montado
         ResumeMatchAnalysis llmAnalysis = chatClient
                 .prompt(prompt)
                 .call()
