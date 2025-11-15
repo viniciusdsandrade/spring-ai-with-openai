@@ -37,4 +37,16 @@ public class JobDescriptionServiceImplTest {
 
         assertThat(result).isEqualTo("Descrição curta de vaga backend");
     }
+    
+    @Test
+    @DisplayName("normalize: corta texto quando tamanho excede o limite máximo")
+    void normalize_truncatesWhenExceedsMaxLength() {
+        int maxLength = 15000;
+        String longText = "a".repeat(maxLength + 10);
+
+        String result = service.normalize(longText);
+
+        assertThat(result).hasSize(maxLength);
+        assertThat(result).isEqualTo(longText.substring(0, maxLength));
+    }
 }
