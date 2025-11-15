@@ -81,4 +81,14 @@ public class ResumeParserServiceImplTest {
 
         assertThat(result).isEqualTo("Conteúdo de currículo com múltiplas linhas");
     }
+
+    @Test
+    @DisplayName("extractText: quando ocorre IOException, lança RuntimeException com mensagem apropriada")
+    void extractText_whenIoError_throwsRuntimeException() throws Exception {
+        when(multipartFile.getInputStream()).thenThrow(new IOException("I/O error"));
+
+        assertThatThrownBy(() -> service.extractText(multipartFile))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Error parsing resume file");
+    }
 }
