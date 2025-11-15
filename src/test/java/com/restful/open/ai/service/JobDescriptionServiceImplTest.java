@@ -18,7 +18,6 @@ public class JobDescriptionServiceImplTest {
         assertThat(result).isEmpty();
     }
 
-
     @Test
     @DisplayName("normalize: comprime espaços em branco e remove espaços das bordas")
     void normalize_compressesWhitespaceAndTrims() {
@@ -27,5 +26,15 @@ public class JobDescriptionServiceImplTest {
         String result = service.normalize(raw);
 
         assertThat(result).isEqualTo("Vaga para backend Java com Spring");
+    }
+
+    @Test
+    @DisplayName("normalize: mantém texto quando tamanho é menor ou igual ao limite")
+    void normalize_keepsTextWhenWithinMaxLength() {
+        String raw = "Descrição curta de vaga backend";
+
+        String result = service.normalize(raw);
+
+        assertThat(result).isEqualTo("Descrição curta de vaga backend");
     }
 }
