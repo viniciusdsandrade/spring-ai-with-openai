@@ -54,4 +54,16 @@ public class ResumeParserServiceImplTest {
 
         assertThat(result).isEqualTo("Currículo com várias linhas");
     }
+
+    @Test
+    @DisplayName("normalize: corta texto quando tamanho excede o limite máximo")
+    void normalize_truncatesWhenExceedsMaxLength() {
+        int maxLength = 15000;
+        String longText = "b".repeat(maxLength + 5);
+
+        String result = service.normalize(longText);
+
+        assertThat(result).hasSize(maxLength);
+        assertThat(result).isEqualTo(longText.substring(0, maxLength));
+    }
 }
