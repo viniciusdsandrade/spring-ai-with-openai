@@ -91,4 +91,18 @@ public class ResumeParserServiceImplTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Error parsing resume file");
     }
+    
+    @Test
+    @DisplayName("extractText: quando ocorre TikaException, lança RuntimeException com mensagem apropriada")
+    void extractText_whenTikaError_throwsRuntimeException() throws Exception {
+        InputStream inputStream =
+                new ByteArrayInputStream("qualquer coisa".getBytes(StandardCharsets.UTF_8));
+        when(multipartFile.getInputStream()).thenReturn(inputStream);
+        when(tika.parseToString(any(InputStream.class)))
+                .thenThrow(new TikaException("parse error"));
+
+        assertThatThrownBy(() -> service.extractText(multipartFile))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Error parsing resume file");
+    }
 }
