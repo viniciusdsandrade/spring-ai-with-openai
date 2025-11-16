@@ -10,7 +10,12 @@ import java.io.IOException;
 
 @Service
 public class ResumeParserServiceImpl implements ResumeParserService {
-    private final Tika tika = new Tika();
+
+    private final Tika tika;
+
+    public ResumeParserServiceImpl(Tika tika) {
+        this.tika = tika;
+    }
 
     @Override
     public String extractText(MultipartFile file) {
